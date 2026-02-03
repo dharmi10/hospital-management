@@ -1,0 +1,1 @@
+<h1>Smart Hospital Queue - Coming Soon</h1>
