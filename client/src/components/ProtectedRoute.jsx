@@ -1,0 +1,1 @@
+// prevents patients from seeing the doctor dashboard and viceversa
