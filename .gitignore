@@ -1,0 +1,16 @@
+# 1. Dependency directories
+# These are huge (100MB+) and can be re-installed by anyone using 'npm install'.
+node_modules/
+
+# 2. Environment variables
+# This contains your passwords! NEVER upload this.
+.env
+
+# 3. Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 4. OS generated files (Junk files)
+.DS_Store
+Thumbs.db
