@@ -16,7 +16,7 @@ const Navbar = () => {
 
   return (
     <nav style={styles.nav}>
-      <h2 style={{ margin: 0 }}>🏥 Hospital Triage</h2>
+      <h2 style={{ margin: 0 }}>🏥 MedCare </h2>
       
       <div>
         {user ? (
