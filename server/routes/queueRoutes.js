@@ -2,7 +2,7 @@
 // /api/queue/status, /complete
 
 import express from 'express';
-import {getQueue, updateStatus } from '../comntrollers/queueController.js';
+import {getQueue, updateStatus } from '../controllers/queueController.js';
 
 //import the middleware 
 

@@ -1,13 +1,13 @@
 // brain of backend (function that work)
 //logic for submitting symptoms and fething live status 
 
-import Appointment from "../models/Appointment";
-import { getPriorityScore } from "../utils/priorityAlgo";
+import Appointment from "../models/Appointment.js";
+import { getPriorityScore } from "../utils/priorityAlgo.js";
 
 // create appointment 
- export const createAppointment = async (requestAnimationFrame,res) => {
+ export const createAppointment = async (req,res) => {
     try {
-        const {symptoms, appoinementDate } = req.body;
+        const {symptoms, appointmentDate } = req.body;
 
         // security check 
         // assume the user is logged in 
@@ -32,7 +32,7 @@ import { getPriorityScore } from "../utils/priorityAlgo";
             appoinementDate,
             priorityScore : score, 
             priorityLabel : label, 
-            status : 'Pending'
+            status : 'pending'
          });
 
          //save the users appointment 

@@ -2,7 +2,7 @@
 // /api/patient/create-req
 
 import express from 'express'; 
-import {createAppointment, getPatientAppointment} from '..controllers/patientController.js';
+import {createAppointment, getPatientAppointments} from '../controllers/patientController.js';
 
 
 // need a middleware to check if user is logged in or no 
@@ -17,6 +17,6 @@ router.post('/create-req', verifyToken, createAppointment);
 //get history 
 // user can see their past reqq
 // url: /api/patient/history 
-router.get('/history', verifyToken, getPatientAppointment);
+router.get('/history', verifyToken, getPatientAppointments);
 
 export default router; 

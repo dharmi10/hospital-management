@@ -1,35 +1,39 @@
-// brain of backend (function that work)
-//logic for submitting symptoms and fething live status
+import Appointment from '../models/Appointment.js'; 
 
-import Appointment from "../models/Appointment";
-import { prioritizeTasks } from "../utils/priorityAlgo";
-
-// the queue doc sees on their dashbaord. 
-export const getQueue = async (req,res) => {
+// --- 1. GET THE QUEUE (For Doctor) ---
+export const getQueue = async (req, res) => {
     try {
-        // fetch only active appointments 
-        // take only pending and inprogress patients 
-        const rawAppointments = await Appointment.find({
-            status : { $in : ['pending', 'in-progress']}
-        });
+        // Find all "pending" patients and sort them by Priority Score (Highest first)
+        const queue = await Appointment.find({ status: 'pending' })
+                                       .sort({ priorityScore: -1 }); 
+        
+        res.status(200).json(queue);
 
-        //prepare data for the algo 
-        const formattedTasks = rawAppointments.map( app => ({
-            ...app.toObject(), 
-            deadLine : app.appointmentDate, 
-            content : app.symptoms, 
-            priority : app.priorityLabel 
-        }));
-
-        //run the algo 
-        //list gets reordered based on urgency 
-        const sortedQueue = prioritizeTasks(formattedTasks);
-
-        //send list to frontend 
-        res.status(200).json(sortedQueue);
-
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching queue", error });
     }
-    catch(error) { 
-        res.status(500).json({message : 'Failed to fetch queue '});
+};
+
+// --- 2. UPDATE STATUS (Mark as Completed) ---
+export const updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;    // Grab the ID from the URL
+        const { status } = req.body;  // Grab the new status (e.g. "completed")
+
+        // Update the database
+        const updatedAppointment = await Appointment.findByIdAndUpdate(
+            id,
+            { status: status },
+            { new: true } // This tells Mongoose to return the *updated* version, not the old one
+        );
+
+        if (!updatedAppointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        res.status(200).json(updatedAppointment);
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating status", error });
     }
 };
