@@ -1,20 +1,12 @@
-// the url that frontend talks to
-// /api/auth/login
+// File: server/routes/authRoutes.js
+import express from 'express';
+import { register, login } from '../controllers/authController.js';
 
-import express from 'express'; 
-import {register , login } from '../controllers/authController.js';
+const router = express.Router();
 
-const router = express.Router(); 
+// 👇 NOTICE: These are just '/' and nothing else.
+// The '/api/auth' part comes from server.js automatically!
+router.post('/register', register);
+router.post('/login', login);
 
-// regi door 
-// url : api/auth/register 
-// POST method because we are sending thr data to create something new 
-
-router.post('/register' , register); 
-
-//login door
-// url : /api/auth/login 
-// post method, as sending sensitive password data 
-router.post('/logim' , login); 
-
-export default router; 
+export default router;

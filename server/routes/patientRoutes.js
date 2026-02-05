@@ -1,22 +1,12 @@
-// the url the frontend talks to 
-// /api/patient/create-req
-
-import express from 'express'; 
-import {createAppointment, getPatientAppointments} from '../controllers/patientController.js';
-
-
-// need a middleware to check if user is logged in or no 
-import {verifyToken} from '../middleware/authMiddleware.js';
+import express from 'express';
+import { createPatientEntry, getPatientHistory } from '../controllers/patientController.js';
 
 const router = express.Router();
 
-//submit symptoms 
-//url : /api/patient/ create-req 
-router.post('/create-req', verifyToken, createAppointment);
+// The frontend sends POST request to /api/patient/add
+router.post('/add', createPatientEntry);
 
-//get history 
-// user can see their past reqq
-// url: /api/patient/history 
-router.get('/history', verifyToken, getPatientAppointments);
+// The frontend gets history from /api/patient/history/:userId
+router.get('/history/:userId', getPatientHistory);
 
-export default router; 
+export default router;

@@ -1,26 +1,24 @@
-// function that stands in the middle 
-// checks if the user is logged in or no 
-
 import jwt from 'jsonwebtoken';
 
-export const verifyToken = (req,rex,next) => {
-    try { 
-        const tokenHeader = req.header('Authourization');
+export const verifyToken = async (req, res, next) => {
+  try {
+    let token = req.header("Authorization");
 
-        if(!tokenHeader){
-            return resizeBy.status(403).json({message : 'Access Denied'});
-        }
-         
-        const token = tokenHeader.startsWith('Bearer') ? tokenHeader.slice(7,tokenHeader.length) : tokenHeader;
-        const verified = jwt.verify(token , 'secret_key_123');
-
-        req.userId = verified.id;
-        req.userRole = verified.role;
-
-        next();
-
+    if (!token) {
+      return res.status(403).send("Access Denied");
     }
-    catch (error){
-        resizeBy.status(401).json({message : 'Invalid Token'});
+
+    if (token.startsWith("Bearer ")) {
+      token = token.slice(7, token.length).trimLeft();
     }
+
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    
+    next();
+  } catch (err) {
+    // 👇 The error was likely here. 
+    // You probably had 'resizeBy.status' or just 'resizeBy' instead of 'res.status'
+    res.status(500).json({ error: err.message });
+  }
 };

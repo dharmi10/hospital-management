@@ -1,76 +1,61 @@
-// brain of backend (functions that work)
-// logic for login/register 
-
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// REGISTER LOGIC 
-
-export const register = async (req,res) => {
+// --- REGISTER ---
+export const register = async (req, res) => {
     try {
-        // take data from the req body, what the user has typed 
-        const {name, email ,password, role } = req.body; 
+        const { username, email, password, role } = req.body;
 
-        //check if the user alr exists
-        // asks the database if we have any user with this email 
-        const existingUser = await User.findOne({email});
-        if(existingUser) {
-            return res.staus(400).json({message : 'User already exists'});
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
         }
 
-        //security , hash the pass 
-        const hashedPass = await bcrypt.hash(password,10);
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 12);
 
-        //create new user 
-        const newUser = new User ({
-            name,
-            email, 
-            password : hashedPass, 
-            role : role || 'patient ' // default to patient
+        // Create the new user
+       const newUser = await User.create({
+            name: username, // 👈 CHANGE THIS LINE (Map 'username' to 'name')
+            email,
+            password: hashedPassword,
+            role
         });
 
-        //save to database 
-        await newUser.save();
+        res.status(201).json({ result: newUser, token: "Login to get token" });
 
-        //send success message 
-        res.status(201).json({message : "User registered Successfully!"});
-    }
-    catch (error) {
-        res.status(500).json({message : "Something went wrong" , erorr}
-        );
+    } catch (error) {
+        // 👇 THIS WAS THE TYPO (You had 'erorr')
+        res.status(500).json({ message: "Something went wrong", error });
     }
 };
 
-//LOGIN LOGIC 
-
+// --- LOGIN ---
 export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    // check if the user alr exists. 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, existingUser.password);
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        const token = jwt.sign(
+            { email: existingUser.email, id: existingUser._id, role: existingUser.role },
+            process.env.JWT_SECRET, // Make sure .env has this!
+            { expiresIn: "1h" }
+        );
+
+        res.status(200).json({ result: existingUser, token, role: existingUser.role });
+
+    } catch (error) {
+        res.status(500).json({ message: "Something went wrong", error });
     }
-
-    // verify password 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // generate token 
-    const token = jwt.sign(
-      { id: user._id, role: user.role }, 
-      'secret_key_123',
-      { expiresIn: '1h' } // token expires in 1 hr 
-    );
-
-    // send back the token and user info
-    res.status(200).json({ result: user, token });
-
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
-  }
-}
+};
