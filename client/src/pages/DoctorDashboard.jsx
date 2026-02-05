@@ -1,29 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // 1. Import Auth for Logout/User info
+import { useAuth } from '../context/AuthContext'; 
 import { 
   LayoutDashboard, Calendar, LogOut, Users, CheckCircle, 
-  Clock, Stethoscope, History, Plus, X, ChevronLeft, ChevronRight, RefreshCw
+  Clock, Stethoscope, History, ChevronLeft, RefreshCw
 } from 'lucide-react';
 
 const DoctorDashboard = () => {
-  const { user, logout } = useAuth(); // Get Doctor's name and Logout function
+  const { user, logout } = useAuth(); 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   
-  // --- REAL DATA STATES ---
+  // --- STATE ---
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [consultationStarted, setConsultationStarted] = useState(false);
 
-  // --- 1. FETCH QUEUE FROM API ---
+  // --- 1. MOCK DATA GENERATOR ---
   const fetchQueue = async () => {
+    setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const response = await axios.get(`${API_URL}/queue`);
-      setPatients(response.data);
+      // --- DUMMY DATA START ---
+      const mockData = [
+        {
+          _id: '101',
+          user: { name: 'Sarah Connor' },
+          age: 45,
+          symptoms: 'Severe crushing chest pain radiating to left arm, shortness of breath, sweating. History of hypertension.',
+          priority: 'Critical',
+          priorityScore: 95,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(), // 12 mins ago
+        },
+        {
+          _id: '102',
+          user: { name: 'James Howlett' },
+          age: 32,
+          symptoms: 'Deep laceration on forearm, heavy bleeding controlled by tourniquet. Possible arterial damage.',
+          priority: 'Critical',
+          priorityScore: 88,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
+        },
+        {
+          _id: '103',
+          user: { name: 'Peter Parker' },
+          age: 18,
+          symptoms: 'High fever (104°F), disorientation, severe dehydration, and persistent vomiting.',
+          priority: 'High',
+          priorityScore: 75,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+        },
+        {
+          _id: '104',
+          user: { name: 'Wanda Maximoff' },
+          age: 29,
+          symptoms: 'Severe migraine with visual aura, sensitivity to light, numbness in fingers.',
+          priority: 'Medium',
+          priorityScore: 60,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(), 
+        },
+        {
+          _id: '105',
+          user: { name: 'Bruce Banner' },
+          age: 40,
+          symptoms: 'Mild skin rash on back, complaining of itchiness. No breathing difficulty.',
+          priority: 'Normal',
+          priorityScore: 20,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), 
+        },
+        {
+          _id: '106',
+          user: { name: 'Tony Stark' },
+          age: 48,
+          symptoms: 'Metallic taste in mouth, slight dizziness, minor palpitations.',
+          priority: 'Normal',
+          priorityScore: 35,
+          status: 'Waiting',
+          createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), 
+        }
+      ];
+      // --- DUMMY DATA END ---
+
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Filter and Sort (Logic duplicated from original API intent)
+      const waitingPatients = mockData.filter(patient => patient.status === 'Waiting');
+      const sortedPatients = waitingPatients.sort((a, b) => b.priorityScore - a.priorityScore);
+      
+      setPatients(sortedPatients);
       setLoading(false);
+      console.log('Loaded mock patients:', sortedPatients);
+
     } catch (error) {
       console.error("Error fetching queue:", error);
       setLoading(false);
@@ -32,25 +105,19 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 30000); // Poll every 30s
-    return () => clearInterval(interval);
+    // Removed interval for the demo so it doesn't reset your manual changes instantly
+    // const interval = setInterval(fetchQueue, 30000); 
+    // return () => clearInterval(interval);
   }, []);
 
   // --- 2. HANDLE COMPLETING A PATIENT ---
   const handleCompletePatient = async (patientId) => {
     if (!window.confirm("Mark this patient as treated?")) return;
     
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      await axios.put(`${API_URL}/queue/complete/${patientId}`);
-      
-      // Update UI locally
-      setPatients(patients.filter(p => p._id !== patientId));
-      setConsultationStarted(false); // Reset button state
-      alert("Patient marked as treated.");
-    } catch (error) {
-      alert("Failed to update status");
-    }
+    // Simulate API Success
+    setPatients(prev => prev.filter(p => p._id !== patientId));
+    setConsultationStarted(false); 
+    alert("Patient marked as treated (Local Simulation).");
   };
 
   // --- 3. CALCULATE REAL STATS ---
@@ -73,7 +140,7 @@ const DoctorDashboard = () => {
     },
     { 
       label: 'Avg Wait', 
-      value: '12m', 
+      value: '24m', 
       sub: 'Estimated', 
       icon: <Clock size={20} />, 
       color: 'bg-orange-50', 
@@ -89,7 +156,6 @@ const DoctorDashboard = () => {
     },
   ];
 
-  // Logic: The first person in the array is the "Current Consultation"
   const currentPatient = patients.length > 0 ? patients[0] : null;
   const waitingList = patients.length > 1 ? patients.slice(1) : [];
 
@@ -128,7 +194,7 @@ const DoctorDashboard = () => {
 
         <div className="p-4 border-t border-slate-800">
           <div className="mb-4 px-2">
-            <p className="text-white font-semibold text-sm capitalize">{user?.name || "Doctor"}</p>
+            <p className="text-white font-semibold text-sm capitalize">{user?.name || "Dr. Strange"}</p>
             <p className="text-xs text-slate-500">General Medicine</p>
           </div>
           <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400">
@@ -149,7 +215,7 @@ const DoctorDashboard = () => {
             )}
             <div>
               <h2 className="text-xl font-bold text-slate-800 capitalize">
-                {showHistory ? 'Patient History' : activeTab === 'dashboard' ? `Welcome, ${user?.name || 'Doctor'}` : 'Appointments'}
+                {showHistory ? 'Patient History' : activeTab === 'dashboard' ? `Welcome, ${user?.name || 'Dr. Strange'}` : 'Appointments'}
               </h2>
               <p className="text-xs text-slate-500">
                 {showHistory ? 'View past consultations and medical records' : 'Dashboard Overview'}
@@ -158,7 +224,7 @@ const DoctorDashboard = () => {
           </div>
           <div className="flex items-center gap-4">
              <button onClick={fetchQueue} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-500 transition-colors" title="Refresh Queue">
-                <RefreshCw size={18} />
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
              </button>
              <div className="text-right">
                 <p className="font-semibold text-slate-700">{new Date().toLocaleDateString()}</p>
@@ -173,12 +239,12 @@ const DoctorDashboard = () => {
           ) : activeTab === 'dashboard' ? (
             <DashboardView 
               stats={stats} 
-              currentPatient={currentPatient} // Pass the #1 Patient
-              waitingPatients={waitingList}   // Pass the rest
+              currentPatient={currentPatient}
+              waitingPatients={waitingList}
               onHistoryClick={() => setShowHistory(true)}
               consultationStarted={consultationStarted}
               setConsultationStarted={setConsultationStarted}
-              onComplete={handleCompletePatient} // Pass completion logic
+              onComplete={handleCompletePatient}
               loading={loading}
             />
           ) : (
@@ -194,7 +260,7 @@ const DoctorDashboard = () => {
   );
 };
 
-// --- SUB COMPONENTS (UPDATED WITH REAL PROPS) ---
+// --- SUB COMPONENTS ---
 
 const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick, consultationStarted, setConsultationStarted, onComplete, loading }) => (
   <div className="space-y-8 animate-in fade-in duration-500">
@@ -215,11 +281,14 @@ const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick,
       <h3 className="text-lg font-bold text-slate-800 mb-4">Patient Queue</h3>
       
       {loading ? (
-         <div className="text-center py-10 text-slate-400">Loading queue...</div>
+         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+             <RefreshCw className="animate-spin" />
+             <p>Loading patient data...</p>
+         </div>
       ) : (
       <div className="space-y-6">
         
-        {/* --- CURRENTLY IN CONSULTATION (Top Priority) --- */}
+        {/* --- CURRENTLY IN CONSULTATION --- */}
         <section>
           <p className="text-xs font-semibold text-slate-400 uppercase mb-3">Next Up / In Consultation</p>
           
@@ -231,7 +300,10 @@ const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick,
                     <Users size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 text-lg capitalize">{currentPatient.user?.name || "Unknown"}</h4>
+                    <h4 className="font-bold text-slate-800 text-lg capitalize flex items-center gap-2">
+                        {currentPatient.user?.name || "Unknown"}
+                        <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Age: {currentPatient.age || 'N/A'}</span>
+                    </h4>
                     <p className="text-xs text-slate-500">Wait Time: {Math.floor((new Date() - new Date(currentPatient.createdAt)) / 60000)} mins</p>
                   </div>
                 </div>
@@ -242,7 +314,7 @@ const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick,
                   </span>
                 </div>
               </div>
-              <div className="bg-slate-50 p-4 rounded-xl mb-6">
+              <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Reported Symptoms</p>
                 <p className="text-sm text-slate-700 font-medium">{currentPatient.symptoms}</p>
               </div>
@@ -254,7 +326,6 @@ const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick,
                   <button onClick={onHistoryClick} className="px-6 py-2.5 rounded-lg border border-slate-200 text-sm font-semibold flex items-center gap-2 hover:bg-slate-50">
                     <History size={16} /> History
                   </button>
-                  {/* COMPLETION BUTTON */}
                   <button 
                     onClick={() => onComplete(currentPatient._id)}
                     className={`px-8 py-2.5 rounded-lg text-white text-sm font-semibold flex items-center gap-2 shadow-lg transition-colors ${consultationStarted ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'}`}
@@ -271,11 +342,11 @@ const DashboardView = ({ stats, currentPatient, waitingPatients, onHistoryClick,
           )}
         </section>
 
-        {/* --- WAITING LIST (The rest) --- */}
+        {/* --- WAITING LIST --- */}
         {waitingPatients.length > 0 && (
             <section>
             <p className="text-xs font-semibold text-slate-400 uppercase mb-3">Next in Line ({waitingPatients.length})</p>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {waitingPatients.map((patient, index) => (
                 <PatientCard key={patient._id} patient={patient} index={index} onHistory={onHistoryClick} />
                 ))}
@@ -301,13 +372,13 @@ const PatientCard = ({ patient, index, onHistory }) => (
         </div>
       </div>
       <div className="text-right">
-        <p className="text-[10px] text-slate-400 mb-1">#{index + 2}</p>
+        <p className="text-[10px] text-slate-400 mb-1">Score: {patient.priorityScore}</p>
         <span className={`text-[9px] px-2 py-0.5 rounded-full text-white flex items-center gap-1 ${patient.priority === 'Critical' ? 'bg-red-500' : patient.priority === 'High' ? 'bg-orange-500' : 'bg-blue-500'}`}>
           <div className="w-1 h-1 bg-white rounded-full" /> {patient.priority}
         </span>
       </div>
     </div>
-    <div className="bg-slate-50 p-3 rounded-lg mb-4 h-16 overflow-hidden">
+    <div className="bg-slate-50 p-3 rounded-lg mb-4 h-16 overflow-hidden border border-slate-100">
       <p className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Symptoms</p>
       <p className="text-xs text-slate-600 line-clamp-2">{patient.symptoms}</p>
     </div>
@@ -319,7 +390,7 @@ const PatientCard = ({ patient, index, onHistory }) => (
   </div>
 );
 
-// --- STATIC VIEWS (Unchanged mostly) ---
+// --- STATIC VIEWS ---
 const AppointmentsView = ({ onNewAppointment }) => (
   <div className="flex gap-8">
     <div className="w-80 space-y-4">
@@ -328,14 +399,13 @@ const AppointmentsView = ({ onNewAppointment }) => (
           <Calendar size={18} /> Calendar
         </div>
         <div className="text-center">
-            {/* Calendar UI - Simplified for brevity */}
-            <p className="text-slate-400 text-sm">Calendar Widget</p>
+            <p className="text-slate-400 text-sm">Calendar Widget Placeholder</p>
         </div>
       </div>
     </div>
     <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-8 min-h-[500px] relative flex flex-col items-center justify-center text-slate-300">
         <Calendar size={48} className="opacity-50 mb-4" />
-        <p className="text-slate-800 font-bold">No appointments</p>
+        <p className="text-slate-800 font-bold">No appointments for today</p>
     </div>
   </div>
 );
@@ -344,16 +414,17 @@ const PatientHistoryView = () => (
   <div className="space-y-6">
     <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-20 flex flex-col items-center justify-center text-slate-400">
        <History size={48} className="mb-4 opacity-50"/>
-       <p>Select a patient to view history.</p>
+       <p>Select a patient to view full medical history.</p>
     </div>
   </div>
 );
 
 const AppointmentModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div className="bg-white p-8 rounded-2xl">
+    <div className="bg-white p-8 rounded-2xl shadow-2xl">
         <h2 className="text-xl font-bold mb-4">Feature coming soon</h2>
-        <button onClick={onClose} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Close</button>
+        <p className="text-slate-500 mb-6">Appointment scheduling is disabled in this demo.</p>
+        <button onClick={onClose} className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full">Close</button>
     </div>
   </div>
 );
